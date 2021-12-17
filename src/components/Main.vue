@@ -1,10 +1,11 @@
 <template>
-    <div id="prefectures">
-        <h1>都道府県</h1>
-    </div>
-    <div id="graph">
-        <Graph :options="options" :key="draw_counter" />
-        <h1 id="test"></h1>
+    <div id="main">
+        <div id="prefectures">
+            <h1>都道府県</h1>
+        </div>
+        <div id="graph">
+            <Graph :options="options" :key="draw_counter" />
+        </div>
     </div>
 </template>
 
@@ -100,6 +101,11 @@ export default {
 </script>
 
 <style>
+#main {
+    display: flex;
+    flex-direction: column;
+}
+
 h1 {
     font-size: large;
 }
@@ -111,6 +117,13 @@ label {
 
 #graph {
     width: 100%;
-    margin-top: 200px;
+    margin-top: 100px;
+}
+
+@media screen and (max-width:480px) {
+    #graph {
+        max-width: 480px;
+        margin-top: 50px;
+    }
 }
 </style>
