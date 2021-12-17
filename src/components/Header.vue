@@ -17,4 +17,8 @@ export default {
     line-height: 50px;
     text-align: center;
 }
+
+h1 {
+    font-size: large;
+}
 </style>

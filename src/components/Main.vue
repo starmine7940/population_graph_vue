@@ -1,9 +1,22 @@
 <template>
     <div id="main">
-        <div id="prefectures">
+        <div id="prefectures_wrapper">
             <h1>都道府県</h1>
+            <div id="prefectures">
+                <div v-for="prefecture in prefectures" :key="prefecture.id" id="prefecture">
+                    <label :for="prefecture.id">
+                        <input
+                            type="checkbox"
+                            :id="prefecture.id"
+                            :checked="prefecture.isChecked"
+                            @click="check(prefecture.id, prefecture.name, prefecture.isChecked)"
+                        />
+                        {{ prefecture.name }}
+                    </label>
+                </div>
+            </div>
         </div>
-        <div id="graph">
+        <div id="graph_wrapper">
             <Graph :options="options" :key="draw_counter" />
         </div>
     </div>
@@ -22,7 +35,7 @@ export default {
         'Graph': VueHighcharts
     },
     data() {
-        return{
+        return {
             options: {
                 title: {
                     style: {
@@ -42,59 +55,60 @@ export default {
                 },
                 series: []
             },
-            draw_counter: 0
-        }
+            draw_counter: 0,                    //再描画のために用意した変数
+            prefectures: []
+        };
     },
     methods: {
-        get_prefectures: async function(){
-            const res = await fetch(PREFECTURES_URL, {headers: {"x-api-key": API_KEY}});
-            const res_json = await res.json();
-            const prefectures = res_json.result;
-            for(let i = 0; i < prefectures.length; i++){
-                let checkbox = document.createElement('input');
-                checkbox.setAttribute('type', 'checkbox');
-                checkbox.setAttribute('prefCode', prefectures[i].prefCode);
-                checkbox.setAttribute('prefName', prefectures[i].prefName);
-                checkbox.onclick = () => {
-                    this.check_checkbox(checkbox, prefectures[i].prefCode, prefectures[i].prefName);
-                }
-                let label = document.createElement('label');
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(prefectures[i].prefName));
-                document.getElementById('prefectures').appendChild(label);
+        get_prefectures: async function(){      //都道府県名を取得する関数
+            try{
+                const res = await fetch(PREFECTURES_URL, {headers: {"x-api-key": API_KEY}});
+                const res_json = await res.json();
+                const prefectures = res_json.result;
+                this.prefectures = prefectures.map(val => {
+                    return {
+                        id: val['prefCode'],
+                        name: val['prefName'],
+                        isChecked: false
+                    };
+                });
+            }catch(error){
+                console.log(error.message);
             }
         },
-        check_checkbox: function(checkbox, prefCode, prefName){
-            if(checkbox.checked){
-                this.add_graph(prefCode, prefName);
+        check: function(id, name, isChecked){   //チェックボックスが押されているかを判断する関数
+            if(isChecked){
+                this.delete_graph(id);
             }else{
-                this.delete_graph(prefName);
+                this.add_graph(id, name);
             }
         },
-        add_graph: async function(prefCode, prefName){
-            const res = await fetch(POPULATION_URL + prefCode, {headers: {"x-api-key": API_KEY}});
-            const res_json = await res.json();
-            const population = res_json.result;
-            let population_data = []
-            for(let i = 0; i < population.data[0].data.length; i++){
-                population_data.push(population.data[0].data[i].value);
+        add_graph: async function(id, name){    //グラフのデータを追加する関数
+            try{
+                const res = await fetch(POPULATION_URL + id, {headers: {"x-api-key": API_KEY}});
+                const res_json = await res.json();
+                const population = res_json.result.data[0].data.map(
+                    val => val["value"]
+                );
+                this.options.series.push({
+                    id: id,
+                    name: name,
+                    data: population
+                });
+                this.prefectures[id - 1].isChecked = true;
+                this.draw_counter++;
+            }catch(error){
+                console.log(error.message);
             }
-            this.options.series.push({
-                name: prefName,
-                data: population_data
-            });
+            
+        },
+        delete_graph: function(id){             //グラフのデータを削除する関数
+            this.options.series = this.options.series.filter(val => val.id !== id);
+            this.prefectures[id - 1].isChecked = false;
             this.draw_counter++;
         },
-        delete_graph: function(prefName){
-            for(let i = 0; i < this.options.series.length; i++){
-                if(this.options.series[i].name == prefName){
-                    this.options.series.splice(i, 1);
-                    this.draw_counter++;
-                }
-            }
-        }
     },
-    mounted() {
+    mounted(){
         this.get_prefectures();
     }
 }
@@ -110,18 +124,18 @@ h1 {
     font-size: large;
 }
 
-label {
-    float: left;
-    margin: 0px 10px 0px 0px;
+#prefectures {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
-#graph {
+#graph_wrapper {
     width: 100%;
     margin-top: 100px;
 }
 
 @media screen and (max-width:480px) {
-    #graph {
+    #graph_wrapper {
         max-width: 480px;
         margin-top: 50px;
     }

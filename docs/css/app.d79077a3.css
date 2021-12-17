@@ -1,0 +1,1 @@
+#header{background-color:#d3d3d3;height:50px;line-height:50px;text-align:center}#main{display:flex;flex-direction:column}h1{font-size:large}#prefectures{display:grid;grid-template-columns:1fr 1fr 1fr 1fr}#graph_wrapper{width:100%;margin-top:100px}@media screen and (max-width:480px){#graph_wrapper{max-width:480px;margin-top:50px}}
